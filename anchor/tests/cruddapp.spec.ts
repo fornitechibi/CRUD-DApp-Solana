@@ -1,76 +1,119 @@
-import * as anchor from '@coral-xyz/anchor'
-import {Program} from '@coral-xyz/anchor'
-import {Keypair} from '@solana/web3.js'
-import {Cruddapp} from '../target/types/cruddapp'
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { Keypair, PublicKey } from "@solana/web3.js";
+import { Cruddapp } from "../target/types/cruddapp";
+import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
 
-describe('cruddapp', () => {
-  // Configure the client to use the local cluster.
-  const provider = anchor.AnchorProvider.env()
-  anchor.setProvider(provider)
-  const payer = provider.wallet as anchor.Wallet
+// **--------------------------------CREATED BY BLUEDRAGON-----------------------------------------------**
 
-  const program = anchor.workspace.Cruddapp as Program<Cruddapp>
+describe("cruddapp", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  const payer = provider.wallet as anchor.Wallet;
 
-  const cruddappKeypair = Keypair.generate()
+  const program = anchor.workspace.Cruddapp as Program<Cruddapp>;
 
-  it('Initialize Cruddapp', async () => {
-    await program.methods
-      .initialize()
-      .accounts({
-        cruddapp: cruddappKeypair.publicKey,
-        payer: payer.publicKey,
-      })
-      .signers([cruddappKeypair])
-      .rpc()
+  // **--------------------------------HAPPY TEST CASES-----------------------------------------------**
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+  it("Creates a new entry", async () => {
+    const title = "Hello, World!";
+    const message = "This is a test message.";
 
-    expect(currentCount.count).toEqual(0)
-  })
+    await program.methods.createJournalEntry(title, message).rpc();
 
-  it('Increment Cruddapp', async () => {
-    await program.methods.increment().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+    const entryAddress = PublicKey.findProgramAddressSync(
+      [Buffer.from(title), payer.publicKey.toBuffer()],
+      program.programId
+    )[0];
+    console.log("Entry created:", entryAddress);
+    const entry = await program.account.journalEntryState.fetch(entryAddress);
+    console.log("Entry values:", entry);
+  });
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+  it("Update an entry", async () => {
+    const title = "Hello, World!";
+    const newMessage = "This is an updated message.";
+    const entryAddress = PublicKey.findProgramAddressSync(
+      [Buffer.from(title), payer.publicKey.toBuffer()],
+      program.programId
+    )[0];
+    const OldEntry = await program.account.journalEntryState.fetch(
+      entryAddress
+    );
+    console.log("Old Entry values:", OldEntry);
+    await program.methods.updateJournalEntry(title, newMessage).rpc();
+    console.log("Entry updated address:", entryAddress);
+    const updatedEntry = await program.account.journalEntryState.fetch(
+      entryAddress
+    );
+    console.log("Entry values:", updatedEntry);
+  });
 
-    expect(currentCount.count).toEqual(1)
-  })
+  it("Reading an entry", async () => {
+    const title = "Hello, World!";
 
-  it('Increment Cruddapp Again', async () => {
-    await program.methods.increment().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+    const entryAddress = PublicKey.findProgramAddressSync(
+      [Buffer.from(title), payer.publicKey.toBuffer()],
+      program.programId
+    )[0];
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+    const entry = await program.account.journalEntryState.fetch(entryAddress);
+    console.log("Entry values:", entry);
+  });
 
-    expect(currentCount.count).toEqual(2)
-  })
+  it("Delete an entry", async () => {
+    const title = "Hello, World!";
 
-  it('Decrement Cruddapp', async () => {
-    await program.methods.decrement().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+    const entryAddress = PublicKey.findProgramAddressSync(
+      [Buffer.from(title), payer.publicKey.toBuffer()],
+      program.programId
+    )[0];
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+    const entry = await program.account.journalEntryState.fetch(entryAddress);
+    console.log("Old Entry values:", entry);
 
-    expect(currentCount.count).toEqual(1)
-  })
+    await program.methods.deleteJournalEntry(title).rpc();
+    try {
+      const deletedEntry = await program.account.journalEntryState.fetch(
+        entryAddress
+      );
+    } catch (error) {
+      console.log("Deleted Entry values:");
+    }
+  });
 
-  it('Set cruddapp value', async () => {
-    await program.methods.set(42).accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+  // **--------------------------------UNHAPPY TEST CASES-----------------------------------------------**
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+  it("Trying to read an entry that does not exist", async () => {
+    const title = "New, World!";
+    const entryAddress = PublicKey.findProgramAddressSync(
+      [Buffer.from(title), payer.publicKey.toBuffer()],
+      program.programId
+    )[0];
 
-    expect(currentCount.count).toEqual(42)
-  })
+    try {
+      const entry = await program.account.journalEntryState.fetch(entryAddress);
+    } catch (error) {
+      console.log("Cannot read the non existing entry");
+    }
+  });
 
-  it('Set close the cruddapp account', async () => {
-    await program.methods
-      .close()
-      .accounts({
-        payer: payer.publicKey,
-        cruddapp: cruddappKeypair.publicKey,
-      })
-      .rpc()
+  it("Trying to update an entry that does not exist", async () => {
+    const title = "New, World!";
+    const newMessage = "This is an updated message.";
+    try {
+      await program.methods.updateJournalEntry(title, newMessage).rpc();
+    } catch (error) {
+      console.log("Cannot update non existing entry");
+    }
+  });
 
-    // The account should no longer exist, returning null.
-    const userAccount = await program.account.cruddapp.fetchNullable(cruddappKeypair.publicKey)
-    expect(userAccount).toBeNull()
-  })
-})
+  it("Trying to delete an entry that does not exist", async () => {
+    const title = "New, World!";
+    try {
+      await program.methods.deleteJournalEntry(title).rpc();
+    } catch (error) {
+      console.log("Cannot delete non existing entry");
+    }
+  });
+});

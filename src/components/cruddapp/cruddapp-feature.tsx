@@ -1,26 +1,29 @@
-'use client'
+"use client";
 
-import { useWallet } from '@solana/wallet-adapter-react'
-import { WalletButton } from '../solana/solana-provider'
-import { AppHero, ellipsify } from '../ui/ui-layout'
-import { ExplorerLink } from '../cluster/cluster-ui'
-import { useCruddappProgram } from './cruddapp-data-access'
-import { CruddappCreate, CruddappList } from './cruddapp-ui'
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletButton } from "../solana/solana-provider";
+import { AppHero, ellipsify } from "../ui/ui-layout";
+import { ExplorerLink } from "../cluster/cluster-ui";
+import { useCruddappProgram } from "./cruddapp-data-access";
+import { CruddappCreate, CruddappList } from "./cruddapp-ui";
 
 export default function CruddappFeature() {
-  const { publicKey } = useWallet()
-  const { programId } = useCruddappProgram()
+  const { publicKey } = useWallet();
+  const { programId } = useCruddappProgram();
 
   return publicKey ? (
     <div>
       <AppHero
-        title="Cruddapp"
+        title="CRUD Dapp"
         subtitle={
-          'Create a new account by clicking the "Create" button. The state of a account is stored on-chain and can be manipulated by calling the program\'s methods (increment, decrement, set, and close).'
+          "A simple CRUD app that demonstrates how to create, read, update, and delete data on Solana. Created By BLUEDRAGON"
         }
       >
         <p className="mb-6">
-          <ExplorerLink path={`account/${programId}`} label={ellipsify(programId.toString())} />
+          <ExplorerLink
+            path={`account/${programId}`}
+            label={ellipsify(programId.toString())}
+          />
         </p>
         <CruddappCreate />
       </AppHero>
@@ -34,5 +37,5 @@ export default function CruddappFeature() {
         </div>
       </div>
     </div>
-  )
+  );
 }
