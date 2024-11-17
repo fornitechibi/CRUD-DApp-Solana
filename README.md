@@ -4,6 +4,10 @@
 
 A full-stack decentralized application built with Solana, Anchor, and Next.js that demonstrates basic CRUD (Create, Read, Update, Delete) operations.
 
+## 📺 Live App
+
+[CRUD-Dapp](https://crud-dapp-solana-bluedragon.vercel.app/)
+
 ## 📋 Prerequisites
 
 - Node.js 16+ and npm
