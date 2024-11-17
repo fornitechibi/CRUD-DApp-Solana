@@ -1,5 +1,7 @@
 # Solana CRUD dApp
 
+![Crud Image](public/Crud2.png)
+
 A full-stack decentralized application built with Solana, Anchor, and Next.js that demonstrates basic CRUD (Create, Read, Update, Delete) operations.
 
 ## 📋 Prerequisites
